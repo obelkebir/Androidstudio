@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -29,6 +30,8 @@ import com.android.rssample.ScriptC_gris;
 import com.github.chrisbanes.photoview.PhotoView;
 import com.github.chrisbanes.photoview.PhotoViewAttacher;
 
+import org.w3c.dom.Text;
+
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
@@ -43,188 +46,10 @@ public class MainActivity extends AppCompatActivity {
     public MainActivity() {
 
     }
-
-
-
-    private void original(Bitmap bmp,int[] pixels){
-        bmp.setPixels(pixels,0,bmp.getWidth(),0,0,bmp.getWidth(),bmp.getHeight());
-    }
-    private void saveImageToGallery(Bitmap btmp){
+    public void saveImageToGallery(Bitmap btmp){
 
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
         MediaStore.Images.Media.insertImage(getContentResolver(), btmp,"title", "description");
-    }
-    private void equalize(Bitmap bmp){
-        int[] pixels= new int[bmp.getWidth()*bmp.getHeight()];
-        int pixel;
-        int gris;
-        int histoV[]= new int[256];
-        int histoR[]= new int[256];
-        int histoB[]= new int[256];
-        int cumuleV[]=new int[256];
-        int cumuleR[]=new int[256];
-        int cumuleB[]=new int[256];
-        bmp.getPixels(pixels,0,bmp.getWidth(),0,0,bmp.getWidth(),bmp.getHeight());
-        for(int i=0; i<bmp.getWidth();i++) {
-            for (int j = 0; j < bmp.getHeight(); j++) {
-                pixel = pixels[i + (j * bmp.getWidth())];
-                histoV[Color.green(pixel)]++;
-                histoR[Color.red(pixel)]++;
-                histoB[Color.blue(pixel)]++;
-            }
-        }
-        cumuleR[0]=0;
-        cumuleB[0]=0;
-        cumuleV[0]=0;
-        for(int i=1; i<255;i++) {
-            cumuleV[i]=cumuleV[i-1]+histoV[i];
-            cumuleR[i]=cumuleR[i-1]+histoR[i];
-            cumuleB[i]=cumuleB[i-1]+histoB[i];
-        }
-        int rouge=0;
-        int vert=0;
-        int bleu=0;
-        for(int i=0; i<bmp.getWidth();i++) {
-            for (int j = 0; j < bmp.getHeight(); j++) {
-                pixel = pixels[i + (j * bmp.getWidth())];
-                rouge= cumuleR[Color.red(pixel)]*255/(bmp.getHeight()*bmp.getWidth());
-                vert = cumuleV[Color.green(pixel)]*255/(bmp.getHeight()*bmp.getWidth());
-                bleu = cumuleB[Color.blue(pixel)]*255/(bmp.getHeight()*bmp.getWidth());
-                pixels[i + (j * bmp.getWidth())]=Color.rgb(rouge,vert,bleu);
-
-            }
-        }
-        bmp.setPixels(pixels,0,bmp.getWidth(),0,0,bmp.getWidth(),bmp.getHeight());
-    }
-
-    private void lessContraste(Bitmap bmp){
-        int[] pixels= new int[bmp.getWidth()*bmp.getHeight()];
-        int bleu;
-        int vert;
-        int rouge;
-        int medium=0;
-        int mediumV=0;
-        int mediumB=0;
-        int mediumR=0;
-        int spectre=0;
-        int pixel;
-        bmp.getPixels(pixels,0,bmp.getWidth(),0,0,bmp.getWidth(),bmp.getHeight());
-        for(int i=0; i<bmp.getWidth();i++) {
-            for (int j = 0; j < bmp.getHeight(); j++) {
-                pixel = pixels[i + (j * bmp.getWidth())];
-                bleu = Color.blue(pixel);
-                rouge=Color.red(pixel);
-                vert=Color.green(pixel);
-                mediumB=mediumB+bleu;
-                mediumR=mediumR+rouge;
-                mediumV=mediumV+vert;
-            }
-        }
-        mediumB=mediumB/(bmp.getWidth()*bmp.getHeight());
-        mediumR=mediumR/(bmp.getWidth()*bmp.getHeight());
-        mediumV=mediumV/(bmp.getWidth()*bmp.getHeight());
-        medium=mediumB+mediumR+mediumV;
-        for(int i=0; i<bmp.getWidth();i++) {
-            for (int j = 0; j < bmp.getHeight(); j++) {
-                pixel = pixels[i + (j * bmp.getWidth())];
-                bleu = Color.blue(pixel);
-                rouge=Color.red(pixel);
-                vert=Color.green(pixel);
-                if ((rouge>= bleu+20)&& (rouge>=vert+20)){
-                    rouge=rouge- (rouge-mediumR)/8;
-                }
-                else if ((vert>= bleu+20)&& (vert>=rouge+20)){
-                    vert=vert+(mediumV -vert)/8;
-                }
-                else if ((bleu>= rouge+20)&& (bleu>=vert+20)){
-                    bleu=bleu+(mediumB -bleu)/8;
-                }
-                else if( (Math.abs(rouge-vert)<= 1 && Math.abs(bleu-vert)<= 1 )){
-                    rouge=rouge- (rouge-medium/3)/8;
-                    vert=vert+(medium/3 -vert)/8;
-                    bleu=bleu+(medium/3 -bleu)/8;
-                }
-
-                pixels[i + (j * bmp.getWidth())] = Color.rgb(rouge, vert, bleu);
-            }
-        }
-        bmp.setPixels(pixels,0,bmp.getWidth(),0,0,bmp.getWidth(),bmp.getHeight());
-    }
-    private void ToContrastedyn(Bitmap bmp){
-
-        RenderScript rs = RenderScript.create(this);
-        Allocation input = Allocation.createFromBitmap (rs , bmp ) ;
-        Allocation output = Allocation.createTyped (rs , input.getType()) ;
-        ScriptC_gris grayScript = new ScriptC_gris(rs);
-        grayScript.forEach_maxmin(input);
-        grayScript.forEach_contrast(input,output);
-        output.copyTo(bmp);
-        input.destroy();
-        output.destroy();
-        grayScript.destroy();
-        rs.destroy();
-    }
-    private void green(Bitmap bmp){
-        int[] pixels= new int[bmp.getWidth()*bmp.getHeight()];
-        int rouge;
-        int bleu;
-        int vert;
-        int moyenne;
-        int pixel;
-        float[] HSV = new float[3];
-        bmp.getPixels(pixels,0,bmp.getWidth(),0,0,bmp.getWidth(),bmp.getHeight());
-        for(int i=0; i<bmp.getWidth();i++){
-            for(int j=0; j<bmp.getHeight() ; j++){
-                pixel=pixels[i+(j*bmp.getWidth())];
-                bleu=Color.blue(pixel);
-                rouge=Color.red(pixel);
-                vert= Color.green(pixel);
-                Color.RGBToHSV(rouge,vert,bleu,HSV);
-                if (!((vert>50) && (HSV[1]>0.3) && (bleu+rouge-28<vert))){
-                    moyenne= (int) ((float) ((float) rouge*0.33) + (float) (0.59*vert) + (float) bleu*0.11);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        pixels[i+(j*bmp.getWidth())]= Color.rgb(moyenne,moyenne,moyenne);
-                    }
-                }
-
-            }
-        }
-        bmp.setPixels(pixels,0,bmp.getWidth(),0,0,bmp.getWidth(),bmp.getHeight());
-    }
-
-    private void colorize(Bitmap bmp){
-        int[] pixels= new int[bmp.getWidth()*bmp.getHeight()];
-        int rouge;
-        int bleu;
-        int vert;
-        float HSV[]=new float[3];
-        int pixel;
-        bmp.getPixels(pixels,0,bmp.getWidth(),0,0,bmp.getWidth(),bmp.getHeight());
-        for(int i=0; i<bmp.getWidth();i++){
-            for(int j=0; j<bmp.getHeight() ; j++){
-                pixel=pixels[i+(j*bmp.getWidth())];
-                bleu=Color.blue(pixel);
-                rouge=Color.red(pixel);
-                vert= Color.green(pixel);
-                Color.RGBToHSV(rouge,vert,bleu,HSV);
-                HSV[0]=30;
-                pixels[i+(j*bmp.getWidth())]=Color.HSVToColor(HSV);
-            }
-        }
-        bmp.setPixels(pixels,0,bmp.getWidth(),0,0,bmp.getWidth(),bmp.getHeight());
-
-    }
-    private void ToGrayOp(Bitmap bmp){
-        RenderScript rs = RenderScript.create(this);
-        Allocation input = Allocation.createFromBitmap (rs , bmp ) ;
-        Allocation output = Allocation.createTyped (rs , input.getType()) ;
-        ScriptC_gris grayScript = new ScriptC_gris(rs);
-        grayScript.forEach_toGray(input,output);
-        output.copyTo(bmp);
-        input.destroy();
-        output.destroy();
-        grayScript.destroy();
-        rs.destroy();
     }
     @SuppressLint("WrongViewCast")
     @Override
@@ -232,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Button buttonn =  (Button) findViewById(R.id.button8);
+        final SeekBar barr2= (SeekBar) findViewById(R.id.seekBar3);
         Button upload= (Button)findViewById(R.id.button4);
         image = (PhotoView) findViewById(R.id.photo_view);
         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
@@ -254,24 +80,29 @@ public class MainActivity extends AppCompatActivity {
         });
         txt = (TextView) findViewById(R.id.textView);
         button = (Button) findViewById(R.id.button2);
+        Button convu = (Button) findViewById(R.id.button10);
         Button buttonnn = (Button) findViewById(R.id.button3);
         Button buttonnnn =  (Button) findViewById(R.id.button);
         Button contraste=(Button) findViewById(R.id.button5);
         Button uncontraste = (Button) findViewById(R.id.button6);
         Button back = (Button) findViewById(R.id.button7);
+        Button laplac=(Button)findViewById(R.id.button11);
         Button save = (Button) findViewById(R.id.button9);
+        Button gauss= (Button) findViewById(R.id.button12);
+        Button pencil= (Button) findViewById(R.id.button14);
         SeekBar bar = (SeekBar) findViewById(R.id.seekBar);
-        //BitmapDrawable drawable = (BitmapDrawable) image.getDrawable();
-        //Bitmap btmpi = drawable.getBitmap();
+        Button sobel= (Button) findViewById(R.id.button13);
+        TextView txtt=(TextView) findViewById(R.id.textView2);
+
         final BitmapFactory.Options options=new BitmapFactory.Options();
         options.inMutable=true;
         bitmap =BitmapFactory.decodeResource(getResources(),R.drawable.colline,options);
-        //Bitmap btmp=btmpi.copy(Bitmap.Config.ARGB_8888, true);
+
         final int s = bitmap.getHeight();
         final int p = bitmap.getWidth();
         pixels = new int[s*p];
         bitmap.getPixels(pixels,0,p,0,0,p,s);
-        txt.setText("Luminusoité");
+        txt.setText("Brightness");
         image.setImageBitmap(bitmap);
         save.setText("Save");
         bar.setMax(50);
@@ -290,21 +121,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 float prog= seekBar.getProgress() - seekBar.getMax()/2;
-                float milieu = seekBar.getMax()/200;
+                float mid = seekBar.getMax()/200;
                 int[] pixels= new int[bitmap.getWidth()*bitmap.getHeight()];
                 int pixel;
-                int bleu;
-                int vert;
-                int rouge;
+                int blue;
+                int green;
+                int red;
                 float[] HSV = new float[3];
                 bitmap.getPixels(pixels,0,bitmap.getWidth(),0,0,bitmap.getWidth(),bitmap.getHeight());
                 for(int i=0; i<bitmap.getWidth();i++){
                     for(int j=0; j<bitmap.getHeight() ; j++){
                         pixel=pixels[i+(j*bitmap.getWidth())];
-                        bleu=Color.blue(pixel);
-                        rouge=Color.red(pixel);
-                        vert= Color.green(pixel);
-                        Color.RGBToHSV(rouge,vert,bleu,HSV);
+                        blue=Color.blue(pixel);
+                        red=Color.red(pixel);
+                        green= Color.green(pixel);
+                        Color.RGBToHSV(red,green,blue,HSV);
                         HSV[2]= (float) (HSV[2]+ prog/100);
                         if (HSV[2]>1)
                             HSV[2]=1;
@@ -318,6 +149,35 @@ public class MainActivity extends AppCompatActivity {
                 mAttacher.update();
             }
         });
+
+
+
+
+        txtt.setText("Color");
+        barr2.setMax(100);
+        barr2.setProgress((0));
+        barr2.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                Traitement.colorize(bitmap,seekBar.getProgress());
+                ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
+                mAttacher.update();
+            }
+        });
+
+
+
+
         save.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
@@ -329,13 +189,74 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
         );
+        final android.content.Context context=this;
+        convu.setText("moy");
+        convu.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Traitement.convomoy(bitmap);
+                        ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
+                        mAttacher.update();
+                    }
+                }
+        );
+        pencil.setText("pencil");
+        pencil.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Traitement.pencil(bitmap,context);
+                        ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
+                        mAttacher.update();
+                    }
+                }
+        );
+        sobel.setText("sobel");
+        sobel.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Traitement.convoSobel(bitmap);
+                        ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
+                        mAttacher.update();
+                    }
+                }
+        );
+        gauss.setText("gauss");
+        gauss.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Traitement.convoGauss(bitmap);
+                        ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
+                        mAttacher.update();
+                    }
+                }
+        );
+        laplac.setText("Laplac");
+        laplac.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Traitement.convoLaplac(bitmap);
+                        ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
+                        mAttacher.update();
+                    }
+                }
+        );
         button.setText("GrayRapide");
         button.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
 
-                        ToGrayOp(bitmap);
+                        Traitement.ToGrayOp(bitmap,context);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -346,7 +267,7 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        equalize(bitmap);
+                        Traitement.equalize(bitmap);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -357,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        colorize(bitmap);
+                        Traitement.colorize(bitmap,30);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -368,18 +289,19 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        green(bitmap);
+                        Traitement.green(bitmap);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
                 }
         );
+
         contraste.setText("Constrast");
         contraste.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        ToContrastedyn(bitmap);
+                        Traitement.ToContrastedyn(bitmap, context);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -389,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
         uncontraste.setOnClickListener(new View.OnClickListener() {
                                            @Override
                                            public void onClick(View v) {
-                                               lessContraste(bitmap);
+                                               Traitement.lessContraste(bitmap);
                                                ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                                                mAttacher.update();
                                            }
@@ -399,7 +321,7 @@ public class MainActivity extends AppCompatActivity {
         back.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
-                                        original(bitmap,pixels);
+                                        Traitement.original(bitmap,pixels);
                                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                                         mAttacher.update();
                                     }
