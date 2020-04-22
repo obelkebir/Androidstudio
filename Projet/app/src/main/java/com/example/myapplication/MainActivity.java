@@ -92,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
         Button pencil= (Button) findViewById(R.id.button14);
         SeekBar bar = (SeekBar) findViewById(R.id.seekBar);
         Button sobel= (Button) findViewById(R.id.button13);
+        Button cartoon = (Button) findViewById(R.id.button15);
         TextView txtt=(TextView) findViewById(R.id.textView2);
 
         final BitmapFactory.Options options=new BitmapFactory.Options();
@@ -169,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                Traitement.colorize(bitmap,seekBar.getProgress());
+                Processing.colorize(bitmap,seekBar.getProgress());
                 ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                 mAttacher.update();
             }
@@ -196,7 +197,19 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
 
-                        Traitement.convomoy(bitmap);
+                        Convolution.convomoy(bitmap);
+                        ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
+                        mAttacher.update();
+                    }
+                }
+        );
+        cartoon.setText("cartoon");
+        cartoon.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Convolution.cartoon(bitmap,context);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -208,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
 
-                        Traitement.pencil(bitmap,context);
+                        Convolution.pencil(bitmap,context);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -220,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
 
-                        Traitement.convoSobel(bitmap);
+                        Convolution.convoSobel(bitmap);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -232,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
 
-                        Traitement.convoGauss(bitmap);
+                        Convolution.convoGauss(bitmap);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -244,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
 
-                        Traitement.convoLaplac(bitmap);
+                        Convolution.convoLaplac(bitmap);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -256,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
 
-                        Traitement.ToGrayOp(bitmap,context);
+                        Processing.toGrayOp(bitmap,context);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -267,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Traitement.equalize(bitmap);
+                        Processing.equalize(bitmap);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -278,7 +291,7 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Traitement.colorize(bitmap,30);
+                        Processing.colorize(bitmap,30);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -289,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Traitement.green(bitmap);
+                        Processing.green(bitmap);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -301,7 +314,7 @@ public class MainActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Traitement.ToContrastedyn(bitmap, context);
+                        Processing.toContrastedyn(bitmap, context);
                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                         mAttacher.update();
                     }
@@ -311,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
         uncontraste.setOnClickListener(new View.OnClickListener() {
                                            @Override
                                            public void onClick(View v) {
-                                               Traitement.lessContraste(bitmap);
+                                               Processing.lessContraste(bitmap);
                                                ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                                                mAttacher.update();
                                            }
@@ -321,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
         back.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View v) {
-                                        Traitement.original(bitmap,pixels);
+                                        Processing.original(bitmap,pixels);
                                         ((PhotoView) findViewById(R.id.photo_view)).setImageBitmap(bitmap);
                                         mAttacher.update();
                                     }
